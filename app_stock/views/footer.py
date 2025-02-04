@@ -11,7 +11,7 @@ def footer() -> rx.Component:
                 font_size=Size.SMALL.value,
                 color=TextColor.QUATERNARY.value,
             ),
-            rx.link(
+            rx.text(
                 "Creado con Cafe por MaGaDev",
                 font_size=Size.SMALL.value,
                 color=TextColor.QUATERNARY.value,
