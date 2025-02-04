@@ -1,6 +1,7 @@
-.web
 *.db
-assets/external/
 *.py[cod]
+.venv
+.web
 __pycache__/
+assets/external/
 node_modules/
