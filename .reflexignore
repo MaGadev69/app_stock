@@ -1,0 +1,24 @@
+# Ignorar entornos virtuales
+.venv/
+env/
+venv/
+
+# Cachés de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs y archivos temporales
+*.log
+*.tmp
+.DS_Store
+
+# Directorios innecesarios
+.git/
+node_modules/
+build/
+dist/
+
+# Bases de datos locales
+*.sqlite3
+*.db
