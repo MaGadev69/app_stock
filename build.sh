@@ -1,14 +1,19 @@
+
 source .venv/bin/activate
+# en gitbash source .venv/Scripts/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
 reflex init
-reflex export --frontend-only
+#esta es la url de la api en produccion, la misma esta en railway
+API_URL=https://appstock-production-132c.up.railway.app reflex export --frontend-only
 
 rm -fr public
 unzip frontend.zip -d public
 rm -f frontend.zip
-deactivate
+source .venv/Scripts/deactivate
+# en gitbash source .venv/Scripts/
+#deactivate
 
 
 

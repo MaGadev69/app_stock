@@ -14,11 +14,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 CMD reflex run --env prod --backend-only
 
 #--------------------------------------------backend
+# backend https://www.youtube.com/watch?v=bNy8OZJfA6I
 # https://railway.com/project/9a9cff0e-da58-4129-a371-e0aca5b34fc9/service/0fe6c233-6cfe-4ac8-b6e9-1b7712a0d278?environmentId=23f49f8b-038d-4336-a67a-99a2710c9e61
 # https://appstock-production-132c.up.railway.app/
-#--------------------------------------------fronten
-# https://cloud.reflex.dev/projects/
-# https://app-stock-teal-piano.reflex.run/
+#--------------------------------------------frontend
+# desde aqui la guia para frontend simple https://www.youtube.com/watch?v=h8Tn0ITRoQs&t=2191s
+# https://vercel.com/max3669s-projects/app-stock
+
 
 
 # docker run -d -p 8000:8000 --name app app_stock:latest
@@ -41,7 +43,13 @@ CMD reflex run --env prod --backend-only
 
 # move ..\backup_node_modules node_modules
 
-# Verificar los cambios realizados
+
+
+# hacer primero build.sh, luego pasos para github
+# todo se centraliza alli
+#--------------------------------------------
+# # Pasos para subir cambios a GitHub
+
 # git status
 # git add .
 # git commit -m "Descripción de los cambios"
