@@ -29,10 +29,7 @@ CMD reflex run --env prod --backend-only
 #--------------------------------------------
 # # Inicializar proyecto
 
-# Mueve node_modules/ fuera de la carpeta del proyecto
 
-# mkdir ..\backup_node_modules
-# move node_modules ..\backup_node_modules
 
 # git init
 # git add .
