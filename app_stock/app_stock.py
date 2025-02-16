@@ -13,8 +13,8 @@ from app_stock.pages.demo_front import demo_front
 from app_stock.pages.index import index
 # Con reflex run --loglevel debug se puede ver el log de la aplicación
 
-#class State(rx.State):
-#    """Define el estado de la aplicación"""
+class State(rx.State):
+    """Define el estado de la aplicación"""
     
 # Configuración de la aplicación
 app = rx.App(
