@@ -7,13 +7,26 @@ def link_icon(icon: str, url: str, size: str) -> rx.Component:
         class_name=f"nes-icon {icon} {size}",
         # Las librerías como NES.css tienen varias opciones para tamaños predefinidos, como is-small, is-medium, y is-large. 
         # Cambia is-medium por otra clase para ajustar el tamaño.
-        on_click=rx.redirect(url,external=True),
+        on_click=rx.redirect(url,is_external=True),
     )
+
+#esta la manera en la que reflex utiliza los links
+#def link_icon(icon: str, url: str, size: str) -> rx.Component:
+#    return rx.link(
+#        rx.el.i(class_name=f"nes-icon {icon} {size}"),
+#        href=url,
+#        is_external=True
+#    )
+# #
+
+
+
+
 def button(text: str, url: str, size: str, width: str = None, height: str = None) -> rx.Component:
     return rx.el.a(
         text,
         class_name=f"nes-btn is-warning {size}",
-        on_click=rx.redirect(url,external=False),
+        on_click=rx.redirect(url,is_external=False),
 
         style={
             "width": width,  # Ancho personalizado

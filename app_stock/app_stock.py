@@ -8,17 +8,25 @@ from app_stock.styles.styles import STYLESHEETS, BASE_STYLE # Verifica que estas
 #from app_stock.views.specs import specs  # Importa correctamente el componente navbar
 #from app_stock.views.test import test  # Importa correctamente el componente navbar
 #from app_stock.components.background import background_v2  # Importa correctamente el componente navbar
-#from app_stock.pages.index import index 
-#from app_stock.pages.demo_front import demo_front
+
+from app_stock.pages.demo_front import demo_front
+from app_stock.pages.index import index
 # Con reflex run --loglevel debug se puede ver el log de la aplicación
-class State(rx.State):
-    """Define el estado de la aplicación"""
+
+#class State(rx.State):
+#    """Define el estado de la aplicación"""
     
 # Configuración de la aplicación
 app = rx.App(
     stylesheets=STYLESHEETS,  # Define correctamente tus estilos CSS globales
     style=BASE_STYLE,  # Define un estilo base si es necesario
-    )
+)
+
+
+app.add_page(index, route="/") 
+app.add_page(demo_front, route="/demo_front")
+
+
 # Ejecuta el servidor Reflex
 if __name__ == "__main__":
     app.compile()

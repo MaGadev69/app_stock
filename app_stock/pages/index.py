@@ -1,5 +1,5 @@
 import reflex as rx
-from app_stock.styles.styles import STYLESHEETS, BASE_STYLE # Verifica que estas importaciones sean válidas
+#from app_stock.styles.styles import STYLESHEETS, BASE_STYLE # Verifica que estas importaciones sean válidas
 from app_stock.views.navbar import navbar  # Importa correctamente el componente navbar
 from app_stock.views.header import header  # Importa correctamente el componente navbar
 from app_stock.views.footer import footer  # Importa correctamente el componente navbar
