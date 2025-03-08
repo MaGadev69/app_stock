@@ -26,6 +26,7 @@ BASE_STYLE = {
     "font-family": "'Press Start 2P', sans-serif",
     "color": TextColor.PRIMARY.value,
     "background": Color.PRIMARY.value,
+    "cursor": "default !important",  # Esto forzará el cursor default en todo el proyecto
     rx.heading:{
         "font-family": "'Press Start 2P', sans-serif",
         "color": TextColor.QUATERNARY.value,

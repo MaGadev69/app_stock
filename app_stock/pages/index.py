@@ -7,7 +7,6 @@ from app_stock.views.specs import specs  # Importa correctamente el componente n
 from app_stock.components.background import background_v2  # Importa correctamente el componente navbar
 import app_stock.utils as utils
 
-
 @rx.page(
         title=utils.index_title,
         description=utils.index_description,
@@ -32,7 +31,6 @@ def index() -> rx.Component:
                 width="100%",
                 # Propiedades después de todos los bloques hijos
         ),
-        
         position="relative",  # Contenedor principal con posicionamiento relativo
         # Propiedades después de todos los bloques hijos
         )

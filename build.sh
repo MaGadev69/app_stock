@@ -20,4 +20,4 @@ source .venv/Scripts/deactivate
 
 #API_URL=http://localhost:8000 reflex export --frontend-only
 
-#rm -f frontend.zip
+# .venv/Script/activate
