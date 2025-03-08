@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from reflex.event import EventChain
 from reflex.utils import format, types
@@ -101,9 +101,9 @@ class Tag:
         """
         self.props.update(
             {
-                format.to_camel_case(name, allow_hyphens=True): (
+                format.to_camel_case(name, treat_hyphens_as_underscores=False): (
                     prop
-                    if types._isinstance(prop, Union[EventChain, dict])
+                    if types._isinstance(prop, (EventChain, Mapping))
                     else LiteralVar.create(prop)
                 )  # rx.color is always a string
                 for name, prop in kwargs.items()

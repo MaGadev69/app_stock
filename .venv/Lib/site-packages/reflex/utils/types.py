@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import inspect
 import sys
 import types
 from functools import cached_property, lru_cache, wraps
+from types import GenericAlias
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -25,66 +25,29 @@ from typing import (
     Type,
     Union,
     _GenericAlias,  # pyright: ignore [reportAttributeAccessIssue]
+    _SpecialGenericAlias,  # pyright: ignore [reportAttributeAccessIssue]
     get_args,
     get_type_hints,
 )
 from typing import get_origin as get_origin_og
 
 import sqlalchemy
-from typing_extensions import is_typeddict
-
-import reflex
-from reflex.components.core.breakpoints import Breakpoints
-
-try:
-    from pydantic.v1.fields import ModelField
-except ModuleNotFoundError:
-    from pydantic.fields import (
-        ModelField,  # pyright: ignore [reportAttributeAccessIssue]
-    )
-
+from pydantic.v1.fields import ModelField
 from sqlalchemy.ext.associationproxy import AssociationProxyInstance
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import DeclarativeBase, Mapped, QueryableAttribute, Relationship
+from typing_extensions import Self as Self
+from typing_extensions import is_typeddict
+from typing_extensions import override as override
 
+import reflex
 from reflex import constants
 from reflex.base import Base
+from reflex.components.core.breakpoints import Breakpoints
 from reflex.utils import console
 
-if sys.version_info >= (3, 12):
-    from typing import override as override
-else:
-
-    def override(func: Callable) -> Callable:
-        """Fallback for @override decorator.
-
-        Args:
-            func: The function to decorate.
-
-        Returns:
-            The unmodified function.
-        """
-        return func
-
-
 # Potential GenericAlias types for isinstance checks.
-GenericAliasTypes = [_GenericAlias]
-
-with contextlib.suppress(ImportError):
-    # For newer versions of Python.
-    from types import GenericAlias
-
-    GenericAliasTypes.append(GenericAlias)
-
-with contextlib.suppress(ImportError):
-    # For older versions of Python.
-    from typing import (
-        _SpecialGenericAlias,  # pyright: ignore [reportAttributeAccessIssue]
-    )
-
-    GenericAliasTypes.append(_SpecialGenericAlias)
-
-GenericAliasTypes = tuple(GenericAliasTypes)
+GenericAliasTypes = (_GenericAlias, GenericAlias, _SpecialGenericAlias)
 
 # Potential Union types for isinstance checks (UnionType added in py3.10).
 UnionTypes = (Union, types.UnionType) if hasattr(types, "UnionType") else (Union,)
@@ -95,6 +58,7 @@ GenericType = Union[Type, _GenericAlias]
 # Valid state var types.
 JSONType = {str, int, float, bool}
 PrimitiveType = Union[int, float, bool, str, list, dict, set, tuple]
+PrimitiveTypes = (int, float, bool, str, list, dict, set, tuple)
 StateVar = Union[PrimitiveType, Base, None]
 StateIterVar = Union[list, set, tuple]
 
@@ -126,11 +90,6 @@ RESERVED_BACKEND_VAR_NAMES = {
     "_backend_vars",
     "_was_touched",
 }
-
-if sys.version_info >= (3, 11):
-    from typing import Self as Self
-else:
-    from typing_extensions import Self as Self
 
 
 class Unset:
@@ -551,13 +510,13 @@ def does_obj_satisfy_typed_dict(obj: Any, cls: GenericType) -> bool:
     return required_keys.issubset(required_keys)
 
 
-def _isinstance(obj: Any, cls: GenericType, nested: bool = False) -> bool:
+def _isinstance(obj: Any, cls: GenericType, nested: int = 0) -> bool:
     """Check if an object is an instance of a class.
 
     Args:
         obj: The object to check.
         cls: The class to check against.
-        nested: Whether the check is nested.
+        nested: How many levels deep to check.
 
     Returns:
         Whether the object is an instance of the class.
@@ -565,14 +524,23 @@ def _isinstance(obj: Any, cls: GenericType, nested: bool = False) -> bool:
     if cls is Any:
         return True
 
+    from reflex.vars import LiteralVar, Var
+
+    if cls is Var:
+        return isinstance(obj, Var)
+    if isinstance(obj, LiteralVar):
+        return _isinstance(obj._var_value, cls, nested=nested)
+    if isinstance(obj, Var):
+        return _issubclass(obj._var_type, cls)
+
     if cls is None or cls is type(None):
         return obj is None
 
+    if cls and is_union(cls):
+        return any(_isinstance(obj, arg, nested=nested) for arg in get_args(cls))
+
     if is_literal(cls):
         return obj in get_args(cls)
-
-    if is_union(cls):
-        return any(_isinstance(obj, arg) for arg in get_args(cls))
 
     origin = get_origin(cls)
 
@@ -596,38 +564,40 @@ def _isinstance(obj: Any, cls: GenericType, nested: bool = False) -> bool:
         # cls is a simple generic class
         return isinstance(obj, origin)
 
-    if nested and args:
+    if nested > 0 and args:
         if origin is list:
             return isinstance(obj, list) and all(
-                _isinstance(item, args[0]) for item in obj
+                _isinstance(item, args[0], nested=nested - 1) for item in obj
             )
         if origin is tuple:
             if args[-1] is Ellipsis:
                 return isinstance(obj, tuple) and all(
-                    _isinstance(item, args[0]) for item in obj
+                    _isinstance(item, args[0], nested=nested - 1) for item in obj
                 )
             return (
                 isinstance(obj, tuple)
                 and len(obj) == len(args)
                 and all(
-                    _isinstance(item, arg) for item, arg in zip(obj, args, strict=True)
+                    _isinstance(item, arg, nested=nested - 1)
+                    for item, arg in zip(obj, args, strict=True)
                 )
             )
-        if origin in (dict, Breakpoints):
-            return isinstance(obj, dict) and all(
-                _isinstance(key, args[0]) and _isinstance(value, args[1])
+        if origin in (dict, Mapping, Breakpoints):
+            return isinstance(obj, Mapping) and all(
+                _isinstance(key, args[0], nested=nested - 1)
+                and _isinstance(value, args[1], nested=nested - 1)
                 for key, value in obj.items()
             )
         if origin is set:
             return isinstance(obj, set) and all(
-                _isinstance(item, args[0]) for item in obj
+                _isinstance(item, args[0], nested=nested - 1) for item in obj
             )
 
     if args:
         from reflex.vars import Field
 
         if origin is Field:
-            return _isinstance(obj, args[0])
+            return _isinstance(obj, args[0], nested=nested)
 
     return isinstance(obj, get_base_class(cls))
 
@@ -749,7 +719,7 @@ def check_prop_in_allowed_types(prop: Any, allowed_types: Iterable) -> bool:
     """
     from reflex.vars import Var
 
-    type_ = prop._var_type if _isinstance(prop, Var) else type(prop)
+    type_ = prop._var_type if isinstance(prop, Var) else type(prop)
     return type_ in allowed_types
 
 

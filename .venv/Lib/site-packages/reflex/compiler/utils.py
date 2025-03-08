@@ -10,16 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Type, Union
 from urllib.parse import urlparse
 
-from reflex.utils.exec import is_in_app_harness
-from reflex.utils.prerequisites import get_web_dir
-from reflex.vars.base import Var
-
-try:
-    from pydantic.v1.fields import ModelField
-except ModuleNotFoundError:
-    from pydantic.fields import (
-        ModelField,  # pyright: ignore [reportAttributeAccessIssue]
-    )
+from pydantic.v1.fields import ModelField
 
 from reflex import constants
 from reflex.components.base import (
@@ -39,7 +30,10 @@ from reflex.istate.storage import Cookie, LocalStorage, SessionStorage
 from reflex.state import BaseState, _resolve_delta
 from reflex.style import Style
 from reflex.utils import console, format, imports, path_ops
+from reflex.utils.exec import is_in_app_harness
 from reflex.utils.imports import ImportVar, ParsedImportDict
+from reflex.utils.prerequisites import get_web_dir
+from reflex.vars.base import Var
 
 # To re-export this function.
 merge_imports = imports.merge_imports
@@ -168,6 +162,22 @@ def get_import_dict(lib: str, default: str = "", rest: list[str] | None = None) 
     }
 
 
+def save_error(error: Exception) -> str:
+    """Save the error to a file.
+
+    Args:
+        error: The error to save.
+
+    Returns:
+        The path of the saved error.
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
+    constants.Reflex.LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = constants.Reflex.LOGS_DIR / f"error_{timestamp}.log"
+    traceback.TracebackException.from_exception(error).print(file=log_path.open("w+"))
+    return str(log_path)
+
+
 def compile_state(state: Type[BaseState]) -> dict:
     """Compile the state of the app.
 
@@ -180,10 +190,7 @@ def compile_state(state: Type[BaseState]) -> dict:
     try:
         initial_state = state(_reflex_internal_init=True).dict(initial=True)
     except Exception as e:
-        timestamp = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
-        constants.Reflex.LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        log_path = constants.Reflex.LOGS_DIR / f"state_compile_error_{timestamp}.log"
-        traceback.TracebackException.from_exception(e).print(file=log_path.open("w+"))
+        log_path = save_error(e)
         console.warn(
             f"Failed to compile initial state with computed vars. Error log saved to {log_path}"
         )
@@ -510,6 +517,8 @@ def write_page(path: str | Path, code: str):
     """
     path = Path(path)
     path_ops.mkdir(path.parent)
+    if path.exists() and path.read_text(encoding="utf-8") == code:
+        return
     path.write_text(code, encoding="utf-8")
 
 

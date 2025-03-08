@@ -27,6 +27,36 @@ WRAP_MAP = {
 }
 
 
+def length_of_largest_common_substring(str1: str, str2: str) -> int:
+    """Find the length of the largest common substring between two strings.
+
+    Args:
+        str1: The first string.
+        str2: The second string.
+
+    Returns:
+        The length of the largest common substring.
+    """
+    if not str1 or not str2:
+        return 0
+
+    # Create a matrix of size (len(str1) + 1) x (len(str2) + 1)
+    dp = [[0] * (len(str2) + 1) for _ in range(len(str1) + 1)]
+
+    # Variables to keep track of maximum length and ending position
+    max_length = 0
+
+    # Fill the dp matrix
+    for i in range(1, len(str1) + 1):
+        for j in range(1, len(str2) + 1):
+            if str1[i - 1] == str2[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1] + 1
+                if dp[i][j] > max_length:
+                    max_length = dp[i][j]
+
+    return max_length
+
+
 def get_close_char(open: str, close: str | None = None) -> str:
     """Check if the given character is a valid brace.
 
@@ -138,7 +168,7 @@ def to_snake_case(text: str) -> str:
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower().replace("-", "_")
 
 
-def to_camel_case(text: str, allow_hyphens: bool = False) -> str:
+def to_camel_case(text: str, treat_hyphens_as_underscores: bool = True) -> str:
     """Convert a string to camel case.
 
     The first word in the text is converted to lowercase and
@@ -146,17 +176,16 @@ def to_camel_case(text: str, allow_hyphens: bool = False) -> str:
 
     Args:
         text: The string to convert.
-        allow_hyphens: Whether to allow hyphens in the string.
+        treat_hyphens_as_underscores: Whether to allow hyphens in the string.
 
     Returns:
         The camel case string.
     """
-    char = "_" if allow_hyphens else "-_"
-    words = re.split(f"[{char}]", text.lstrip(char))
-    leading_underscores_or_hyphens = "".join(re.findall(rf"^[{char}]+", text))
+    char = "_" if not treat_hyphens_as_underscores else "-_"
+    words = re.split(f"[{char}]", text)
     # Capitalize the first letter of each word except the first one
     converted_word = words[0] + "".join(x.capitalize() for x in words[1:])
-    return leading_underscores_or_hyphens + converted_word
+    return converted_word
 
 
 def to_title_case(text: str, sep: str = "") -> str:

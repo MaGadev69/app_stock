@@ -29,19 +29,22 @@ from typing import (
     Mapping,
     NoReturn,
     Optional,
+    ParamSpec,
     Sequence,
     Set,
     Tuple,
     Type,
+    TypeGuard,
     TypeVar,
     Union,
     cast,
     get_args,
+    get_type_hints,
     overload,
 )
 
 from sqlalchemy.orm import DeclarativeBase
-from typing_extensions import ParamSpec, TypeGuard, deprecated, get_type_hints, override
+from typing_extensions import deprecated, override
 
 from reflex import constants
 from reflex.base import Base
@@ -73,11 +76,12 @@ from reflex.utils.types import (
 )
 
 if TYPE_CHECKING:
+    from reflex.components.component import BaseComponent
     from reflex.state import BaseState
 
-    from .number import BooleanVar, NumberVar
-    from .object import ObjectVar
-    from .sequence import ArrayVar, StringVar
+    from .number import BooleanVar, LiteralBooleanVar, LiteralNumberVar, NumberVar
+    from .object import LiteralObjectVar, ObjectVar
+    from .sequence import ArrayVar, LiteralArrayVar, LiteralStringVar, StringVar
 
 
 VAR_TYPE = TypeVar("VAR_TYPE", covariant=True)
@@ -129,6 +133,9 @@ class VarData:
     # Position of the hook in the component
     position: Hooks.HookPosition | None = None
 
+    # Components that are part of this var
+    components: Tuple[BaseComponent, ...] = dataclasses.field(default_factory=tuple)
+
     def __init__(
         self,
         state: str = "",
@@ -137,6 +144,7 @@ class VarData:
         hooks: Mapping[str, VarData | None] | Sequence[str] | str | None = None,
         deps: list[Var] | None = None,
         position: Hooks.HookPosition | None = None,
+        components: Iterable[BaseComponent] | None = None,
     ):
         """Initialize the var data.
 
@@ -147,6 +155,7 @@ class VarData:
             hooks: Hooks that need to be present in the component to render this var.
             deps: Dependencies of the var for useCallback.
             position: Position of the hook in the component.
+            components: Components that are part of this var.
         """
         if isinstance(hooks, str):
             hooks = [hooks]
@@ -161,6 +170,7 @@ class VarData:
         object.__setattr__(self, "hooks", tuple(hooks or {}))
         object.__setattr__(self, "deps", tuple(deps or []))
         object.__setattr__(self, "position", position or None)
+        object.__setattr__(self, "components", tuple(components or []))
 
         if hooks and any(hooks.values()):
             merged_var_data = VarData.merge(self, *hooks.values())
@@ -171,6 +181,7 @@ class VarData:
                 object.__setattr__(self, "hooks", merged_var_data.hooks)
                 object.__setattr__(self, "deps", merged_var_data.deps)
                 object.__setattr__(self, "position", merged_var_data.position)
+                object.__setattr__(self, "components", merged_var_data.components)
 
     def old_school_imports(self) -> ImportDict:
         """Return the imports as a mutable dict.
@@ -239,17 +250,19 @@ class VarData:
         else:
             position = None
 
-        if state or _imports or hooks or field_name or deps or position:
-            return VarData(
-                state=state,
-                field_name=field_name,
-                imports=_imports,
-                hooks=hooks,
-                deps=deps,
-                position=position,
-            )
+        components = tuple(
+            component for var_data in all_var_datas for component in var_data.components
+        )
 
-        return None
+        return VarData(
+            state=state,
+            field_name=field_name,
+            imports=_imports,
+            hooks=hooks,
+            deps=deps,
+            position=position,
+            components=components,
+        )
 
     def __bool__(self) -> bool:
         """Check if the var data is non-empty.
@@ -264,6 +277,7 @@ class VarData:
             or self.field_name
             or self.deps
             or self.position
+            or self.components
         )
 
     @classmethod
@@ -577,9 +591,17 @@ class Var(Generic[VAR_TYPE]):
     @classmethod
     def create(  # pyright: ignore[reportOverlappingOverload]
         cls,
+        value: NoReturn,
+        _var_data: VarData | None = None,
+    ) -> Var[Any]: ...
+
+    @overload
+    @classmethod
+    def create(  # pyright: ignore[reportOverlappingOverload]
+        cls,
         value: bool,
         _var_data: VarData | None = None,
-    ) -> BooleanVar: ...
+    ) -> LiteralBooleanVar: ...
 
     @overload
     @classmethod
@@ -587,7 +609,7 @@ class Var(Generic[VAR_TYPE]):
         cls,
         value: int,
         _var_data: VarData | None = None,
-    ) -> NumberVar[int]: ...
+    ) -> LiteralNumberVar[int]: ...
 
     @overload
     @classmethod
@@ -595,7 +617,15 @@ class Var(Generic[VAR_TYPE]):
         cls,
         value: float,
         _var_data: VarData | None = None,
-    ) -> NumberVar[float]: ...
+    ) -> LiteralNumberVar[float]: ...
+
+    @overload
+    @classmethod
+    def create(  # pyright: ignore [reportOverlappingOverload]
+        cls,
+        value: str,
+        _var_data: VarData | None = None,
+    ) -> LiteralStringVar: ...
 
     @overload
     @classmethod
@@ -611,7 +641,7 @@ class Var(Generic[VAR_TYPE]):
         cls,
         value: None,
         _var_data: VarData | None = None,
-    ) -> NoneVar: ...
+    ) -> LiteralNoneVar: ...
 
     @overload
     @classmethod
@@ -619,7 +649,7 @@ class Var(Generic[VAR_TYPE]):
         cls,
         value: MAPPING_TYPE,
         _var_data: VarData | None = None,
-    ) -> ObjectVar[MAPPING_TYPE]: ...
+    ) -> LiteralObjectVar[MAPPING_TYPE]: ...
 
     @overload
     @classmethod
@@ -627,7 +657,7 @@ class Var(Generic[VAR_TYPE]):
         cls,
         value: SEQUENCE_TYPE,
         _var_data: VarData | None = None,
-    ) -> ArrayVar[SEQUENCE_TYPE]: ...
+    ) -> LiteralArrayVar[SEQUENCE_TYPE]: ...
 
     @overload
     @classmethod
@@ -935,7 +965,7 @@ class Var(Generic[VAR_TYPE]):
         """
         actual_name = self._var_field_name
 
-        def setter(state: BaseState, value: Any):
+        def setter(state: Any, value: Any):
             """Get the setter for the var.
 
             Args:
@@ -952,6 +982,8 @@ class Var(Generic[VAR_TYPE]):
                     )
             else:
                 setattr(state, actual_name, value)
+
+        setter.__annotations__["value"] = self._var_type
 
         setter.__qualname__ = self._get_setter_name()
 
@@ -1883,61 +1915,6 @@ def _or_operation(a: Var, b: Var):
         js_expression=f"({a} || {b})",
         var_type=unionize(a._var_type, b._var_type),
     )
-
-
-@dataclasses.dataclass(
-    eq=False,
-    frozen=True,
-    slots=True,
-)
-class CallableVar(Var):
-    """Decorate a Var-returning function to act as both a Var and a function.
-
-    This is used as a compatibility shim for replacing Var objects in the
-    API with functions that return a family of Var.
-    """
-
-    fn: Callable[..., Var] = dataclasses.field(
-        default_factory=lambda: lambda: Var(_js_expr="undefined")
-    )
-    original_var: Var = dataclasses.field(
-        default_factory=lambda: Var(_js_expr="undefined")
-    )
-
-    def __init__(self, fn: Callable[..., Var]):
-        """Initialize a CallableVar.
-
-        Args:
-            fn: The function to decorate (must return Var)
-        """
-        original_var = fn()
-        super(CallableVar, self).__init__(
-            _js_expr=original_var._js_expr,
-            _var_type=original_var._var_type,
-            _var_data=VarData.merge(original_var._get_all_var_data()),
-        )
-        object.__setattr__(self, "fn", fn)
-        object.__setattr__(self, "original_var", original_var)
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Var:
-        """Call the decorated function.
-
-        Args:
-            *args: The args to pass to the function.
-            **kwargs: The kwargs to pass to the function.
-
-        Returns:
-            The Var returned from calling the function.
-        """
-        return self.fn(*args, **kwargs)
-
-    def __hash__(self) -> int:
-        """Calculate the hash of the object.
-
-        Returns:
-            The hash of the object.
-        """
-        return hash((type(self).__name__, self.original_var))
 
 
 RETURN_TYPE = TypeVar("RETURN_TYPE")

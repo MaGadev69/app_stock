@@ -5,6 +5,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 reflex init
+#SI DA ERROR, borrar carpeta .web
 #esta es la url de la api en produccion, la misma esta en railway
 API_URL=https://appstock-production-132c.up.railway.app reflex export --frontend-only
 
