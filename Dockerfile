@@ -27,7 +27,7 @@ CMD reflex run --env prod --backend-only
 # comando para iniciar un contenedor con la imagen creada
 
 #--------------------------------------------
-# # Inicializar proyecto
+# #  Inicializar proyecto
 
 
 
