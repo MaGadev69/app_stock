@@ -1,189 +1,96 @@
-Documentación de la Base de Datos
+Documentación de la Base de Datos 📌
+📂 Descripción General
+Esta base de datos gestiona información de productos, proveedores, sucursales, usuarios y remitos (traslados de mercadería entre sucursales). Se estructura de manera que permite realizar un seguimiento del stock y movimientos de productos.
 
-📂 Tablas y sus Descripciones
+📑 Tablas y Relaciones
+🏢 Sucursales
+id_sucursal (PK): Identificador único de la sucursal.
 
-🛒 productos
+nombre: Nombre de la sucursal.
 
-Contiene los productos disponibles en el sistema.
+dirección, teléfono, ciudad, código_postal: Datos de contacto.
 
-id_producto (INT, PRIMARY KEY) - Identificador único del producto.
+fecha_apertura, horario_apertura: Fechas y horarios de operación.
 
-nombre (VARCHAR(100)) - Nombre del producto.
+estado: Estado de la sucursal (activo/inactivo).
 
-descripcion (TEXT) - Descripción del producto.
-
-precio (DECIMAL(10,2)) - Precio del producto.
-
-id_proveedor (INT, FOREIGN KEY) - Relación con proveedores.
-
-stock (INT) - Cantidad disponible en inventario.
-
-imagen (VARCHAR(100)) - URL o nombre de la imagen del producto.
-
-fecha_creacion (DATETIME) - Fecha de creación del registro.
-
-fecha_ultima_modificacion (DATETIME) - Última fecha de modificación.
-
-categoria (VARCHAR(100)) - Categoría del producto.
-
-estado (ENUM) - Estado del producto (activo/inactivo).
-
-🚚 proveedores
-
-Registra la información de los proveedores de productos.
-
-id_proveedor (INT, PRIMARY KEY) - Identificador único del proveedor.
-
-nombre (VARCHAR(100)) - Nombre del proveedor.
-
-direccion (VARCHAR(255)) - Dirección del proveedor.
-
-telefono (VARCHAR(50)) - Número de contacto.
-
-email (VARCHAR(100)) - Correo electrónico.
-
-fecha_registro (DATETIME) - Fecha en la que se registró el proveedor.
-
-estado (ENUM) - Estado del proveedor.
-
-👤 usuarios
-
-Registra a los usuarios del sistema.
-
-id_usuario (INT, PRIMARY KEY) - Identificador único del usuario.
-
-nombre_usuario (VARCHAR(100)) - Nombre de usuario.
-
-contraseña (VARCHAR(100)) - Contraseña encriptada.
-
-id_sucursal (VARCHAR(30), FOREIGN KEY) - Relación con sucursales.
-
-apellido_usuario (VARCHAR(100)) - Apellido del usuario.
-
-fecha_creacion (DATETIME) - Fecha de creación del usuario.
-
-fecha_ultima_sesion (DATETIME) - Fecha de última sesión del usuario.
-
-estado (ENUM) - Estado del usuario.
-
-rol (ENUM) - Rol del usuario (admin, empleado, etc.).
-
-🏢 sucursales
-
-Registra las sucursales del sistema.
-
-id_sucursal (VARCHAR(30), PRIMARY KEY) - Identificador único de la sucursal.
-
-nombre (VARCHAR(100)) - Nombre de la sucursal.
-
-direccion (VARCHAR(255)) - Dirección de la sucursal.
-
-telefono (VARCHAR(50)) - Teléfono de contacto.
-
-ciudad (VARCHAR(100)) - Ciudad donde está ubicada.
-
-codigo_postal (VARCHAR(10)) - Código postal.
-
-fecha_apertura (DATE) - Fecha en que se abrió la sucursal.
-
-horario_apertura (VARCHAR(50)) - Horario de apertura.
-
-estado (ENUM) - Estado de la sucursal.
-
-📦 remitos
-
-Registra los movimientos de mercadería entre sucursales.
-
-id_remito (INT, PRIMARY KEY) - Identificador único del remito.
-
-fecha (DATE) - Fecha de emisión del remito.
-
-id_sucursal (VARCHAR(30), FOREIGN KEY) - Relación con sucursales.
-
-id_empleado (INT, FOREIGN KEY) - Relación con usuarios.
-
-estado (ENUM) - Estado del remito (pendiente, enviado, recibido).
-
-id_sucursal_origen (VARCHAR(30), FOREIGN KEY) - Sucursal de origen.
-
-id_sucursal_destino (VARCHAR(30), FOREIGN KEY) - Sucursal de destino.
-
-🔄 remitos_productos
-
-Registra los productos incluidos en los remitos.
-
-id_remito (INT, FOREIGN KEY) - Relación con remitos.
-
-id_producto (INT, FOREIGN KEY) - Relación con productos.
-
-cantidad (INT) - Cantidad de productos enviados.
-
-precio (DECIMAL(10,2)) - Precio unitario del producto en el remito.
-
-🔗 Relaciones entre Tablas
-
-productos tiene un id_proveedor que referencia a proveedores.
-
-usuarios tiene un id_sucursal que referencia a sucursales.
-
-remitos tiene un id_sucursal, id_sucursal_origen y id_sucursal_destino que referencian a sucursales.
-
-remitos tiene un id_empleado que referencia a usuarios.
-
-remitos_productos relaciona remitos y productos.
-
-⚙️ Operaciones Disponibles
-
-Esta base de datos permite realizar diversas operaciones para la gestión de stock y movimientos de mercadería:
-
-🛍️ Productos
-
-Agregar nuevos productos.
-
-Modificar información de productos existentes.
-
-Eliminar productos.
-
-Consultar stock disponible.
-
-🏭 Proveedores
-
-Registrar nuevos proveedores.
-
-Actualizar datos de proveedores.
-
-Eliminar proveedores inactivos.
-
-Consultar lista de proveedores.
+🔗 Relación: Una sucursal puede estar asociada a muchos usuarios y puede ser origen o destino en remitos.
 
 👥 Usuarios
+id_usuario (PK): Identificador único del usuario.
 
-Crear nuevos usuarios.
+nombre_usuario, apellido_usuario: Datos personales.
 
-Modificar datos de usuarios.
+contraseña: Clave encriptada para acceso.
 
-Cambiar estado de usuarios (activo/inactivo).
+id_sucursal (FK): Relación con la sucursal donde trabaja.
 
-Gestionar roles y permisos.
+fecha_creación, fecha_última_sesión: Fechas de actividad.
 
-🏬 Sucursales
+estado: Puede ser 'activo' o 'inactivo'.
 
-Registrar nuevas sucursales.
+rol: Puede ser 'admin' o 'empleado'.
 
-Modificar información de sucursales.
+🔗 Relación: Un usuario puede registrar remitos.
 
-Eliminar sucursales (si no tienen operaciones asociadas).
+🚛 Proveedores
+id_proveedor (PK): Identificador del proveedor.
 
-Consultar información de sucursales.
+nombre, dirección, teléfono, email: Información de contacto.
 
-📑 Remitos
+fecha_registro: Fecha en que se registró en el sistema.
 
-Generar nuevos remitos.
+estado: Activo o inactivo.
 
-Asignar productos a los remitos.
+🔗 Relación: Un proveedor puede suministrar muchos productos.
 
-Registrar envíos entre sucursales.
+📦 Productos
+id_producto (PK): Identificador del producto.
 
-Cambiar estado de remitos (pendiente, enviado, recibido).
+nombre, descripción, precio: Datos del producto.
 
-Consultar historial de remitos.
+id_proveedor (FK): Relación con el proveedor.
+
+stock: Cantidad disponible.
+
+imagen: Ruta de imagen del producto.
+
+estado: 'activo', 'discontinuado' o 'en oferta'.
+
+categoria: Categoría del producto.
+
+🔗 Relación: Un producto puede estar en muchos remitos_productos.
+
+📄 Remitos
+id_remito (PK): Identificador del remito.
+
+fecha: Fecha del traslado.
+
+id_sucursal (FK): Sucursal responsable del remito.
+
+id_empleado (FK): Usuario que creó el remito.
+
+estado: 'pendiente', 'completado' o 'anulado'.
+
+id_sucursal_origen (FK): Sucursal de donde salió la mercadería.
+
+id_sucursal_destino (FK): Sucursal a donde llega la mercadería.
+
+🔗 Relación: Un remito puede incluir muchos productos.
+
+📜 Remitos_Productos (Intermedia)
+id_remito (FK): Relación con la tabla remitos.
+
+id_producto (FK): Relación con la tabla productos.
+
+cantidad: Cantidad trasladada.
+
+precio: Precio unitario del producto en el momento del traslado.
+
+🔗 Relación: Relaciona productos con remitos en un esquema de muchos a muchos.
+
+📂Esta base de datos está diseñada para gestionar un flujo completo de stock y logística. Con este esquema se pueden:
+-Registrar y gestionar sucursales, empleados y proveedores.
+-Mantener un catálogo de productos y su stock.
+-Administrar traslados de mercadería entre sucursales mediante remitos.
+-Optimizar consultas con índices estratégicos.

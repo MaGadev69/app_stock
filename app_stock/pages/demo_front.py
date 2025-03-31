@@ -27,44 +27,78 @@ def demo_front() -> rx.Component:
         rx.vstack(
                 navbar(),       
                 rx.flex(
-                sidebar_bottom_profile(),  # O sidebar_items() para versión simple
-                flex_direction=['row'],        
+                        sidebar_bottom_profile(),  # O sidebar_items() para versión simple
+                        flex_direction=['row'],        
                 ),
 
-        
-        
-        rx.hstack(
-                rx.input(
-                placeholder="Nombre del producto",
-                on_blur=ProductoState.set_name,
+
+                rx.form(
+                rx.hstack(
+                        rx.input(
+                        placeholder="Nombre del producto",
+                        on_blur=ProductoState.set_name,
+                        ),
+                        rx.input(
+                        placeholder="Descripción",
+                        on_blur=ProductoState.set_description,
+                        ),
+                        rx.input(
+                        placeholder="Precio",
+                        on_blur=ProductoState.set_price,
+                        ),
+                        
+                        rx.input(
+                        value=ProductoState.nombre_proveedor,
+                        on_change=ProductoState.buscar_proveedores,
+                        placeholder="Buscar proveedor...",
+                        ),
+                        
+                        rx.cond(
+                        ProductoState.proveedores_sugeridos,
+                        rx.vstack(
+                                rx.foreach(
+                                ProductoState.proveedores_sugeridos,
+                                lambda proveedor: rx.button(
+                                        proveedor.nombre,
+                                        on_click=lambda p=proveedor: ProductoState.seleccionar_proveedor(
+                                        p.id_proveedor, p.nombre
+                                        ),
+                                )
+                                )
+                        ),
+                        rx.text("")
+                        ),
+                        
+                        rx.input(
+                        placeholder="Stock",
+                        on_blur=ProductoState.set_stock,
+                        ),
+                        rx.input(
+                        placeholder="Imagen",
+                        on_blur=ProductoState.set_image,
+                        ),
+                        rx.input(
+                        placeholder="Categoría",
+                        on_blur=ProductoState.set_category,
+                        ),
+                        rx.select(
+                        ["activo", "discontinuado", "en oferta"],
+                        value=ProductoState.estado,
+                        on_change=ProductoState.set_estado,
+                        ),
+                        rx.button(
+                        "Agregar Producto",
+                        on_click=ProductoState.agregar_producto,
+                        
+                        
+                        ),
                 ),
-                rx.input(
-                placeholder="Descripción",
-                on_blur=ProductoState.set_description,
+                reset_on_submit=True,
+                
                 ),
-                rx.input(
-                #placeholder="Precio",
-                #type="number",
-                #default_value=ProductoState.precio,
-                #on_blur=ProductoState.set_price,
-                ),
-                rx.button(
-                "Agregar Producto",
-                #    on_click=ProductoState.add_product,
-                ),
-        ),
-        rx.foreach(
-                ProductoState.productos,
-                lambda product: rx.box(
-                #rx.text(product.nombre),
-                #rx.text(product.description),
-                #rx.text(product.price),
-                rx.button(
-                        "Eliminar",
-                        #on_click=lambda: ProductoState.delete_product(product.id),
-                )
-                )
-        ),
+
+
+
         footer(),
         width="100%",
         ),
