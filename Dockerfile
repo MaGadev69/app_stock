@@ -4,6 +4,7 @@ FROM python:3.11 AS init
 WORKDIR /app
 COPY . .    
 
+
 ENV VIRTUAL_ENV=/app/.venv_docker
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN python3.11 -m venv $VIRTUAL_ENV
