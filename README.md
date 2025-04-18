@@ -1,4 +1,5 @@
 Documentación de la Base de Datos 📌
+
 📂 Descripción General
 Esta base de datos gestiona información de productos, proveedores, sucursales, usuarios y remitos (traslados de mercadería entre sucursales). Se estructura de manera que permite realizar un seguimiento del stock y movimientos de productos.
 
